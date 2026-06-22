@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\PaymentMethods;
 
 class OrderSubmitRequest extends FormRequest
 {
@@ -15,6 +16,8 @@ class OrderSubmitRequest extends FormRequest
     {
         return true;
     }
+
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -29,7 +32,7 @@ class OrderSubmitRequest extends FormRequest
             'tableId' => 'nullable',
             'specialInstructions' => 'nullable',
             'isPickUpOrder' => 'required',
-            'paymentMethod' => 'required',
+	    'payment_method' => 'nullable|string',
             'billTable' => 'required',
             'order' => 'required',
         ];

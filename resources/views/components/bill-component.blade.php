@@ -3,7 +3,7 @@
         {{ $index + 1 }}
     </td>
     <td class="px-6 py-4 text-sm text-gray-700">
-        {{ $bill->bill_id }}
+        {{ $bill->orders->first()?->KOT }}
     </td>
     <td class="px-6 py-4 text-sm text-gray-700">
         @if ($bill->table_id == null)
@@ -21,7 +21,7 @@
         @endif
     </td>
     <td class="px-6 py-4 text-sm font-semibold text-gray-900">
-        Rs {{ number_format($bill->grand_total, 2) }}
+        $ {{ number_format($bill->grand_total, 2) }}
     </td>
     <td class="px-6 py-4 text-right">
         <div class="flex items-center justify-end space-x-4">

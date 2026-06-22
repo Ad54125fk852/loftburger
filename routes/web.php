@@ -131,6 +131,10 @@ Route::middleware(['auth', 'biller', 'ensure.pos.configured'])->name('pos.')->pr
     Route::post('/table/submit-for-billing', [PosController::class, 'billTable'])->name('table.bill');
     Route::post('/table/settle', [PosController::class, 'settleTable'])->name('table.settle');
     Route::get('/table/orders/{tableId}', [PosController::class, 'tableOrders'])->name('table.orders');
+Route::get(
+    '/table/{tableId}/preview',
+    [BillController::class, 'tablePreview']
+)->name('table.preview');
 });
 
 
@@ -150,6 +154,10 @@ Route::get('/pos/orders/{order}/preview', function (Order $order) {
  * Routes for Order
  * -----------------------------------------------------------------------------------------------------------------------------
  */
+
+Route::get('/pos/table-statuses', [PosController::class, 'tableStatuses'])
+    ->name('pos.table.statuses');
+
 
 Route::get('/kitchen/check-order/{orderId}', function ($orderId) {
 

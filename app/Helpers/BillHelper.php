@@ -13,19 +13,22 @@ use App\Models\Table;
 class BillHelper
 {
 
-    public static function generateBillID()
-    {
-        $todayStart = now()->startOfDay();
-        $todayEnd = now()->endOfDay();
+public static function generateBillID()
+{
+    $datePrefix = now()->format('Ymd'); // 20260119
+    $start = (int) ($datePrefix . '0000');
 
-        $datePart = now()->format('Ymd');
+    $lastId = Bill::withTrashed()
+        ->where('bill_id', '>=', $start)
+        ->max('bill_id');
 
-        $orderNumber = Bill::whereDate('created_at', '>=', $todayStart)->whereDate('created_at', '<=', $todayEnd)->count() + 1;
-
-        $billId = $datePart . $orderNumber;
-
-        return  $billId;
+    if (!$lastId) {
+        return $start + 1;
     }
+
+    return $lastId + 1;
+}
+
 
     public static function createPickUpBill($kot, $notes, $paymentMethod, $discount)
     {
@@ -36,7 +39,7 @@ class BillHelper
             'notes' => $notes,
             'orderType' => OrderType::Takeaway,
             'discount' => $discount,
-            'paymentMethod' => $paymentMethod,
+            'payment_method' => $paymentMethod,
         ]);
 
         $billId =  self::insertBill($billData);
@@ -63,7 +66,7 @@ class BillHelper
                 'notes' => $notes,
                 'orderType' => OrderType::DineIn,
                 'discount' => $discount,
-                'paymentMethod' => $paymentMethod,
+                'payment_method' => $paymentMethod,
             ]);
 
             $billId =  self::insertBill($billData);
@@ -137,7 +140,7 @@ class BillHelper
     private static function insertBill($billData)
     {
         $tableId = $billData->get('tableId');
-        $paymentMethod = $billData->get('paymentMethod');
+        $paymentMethod = $billData->get('payment_method') ?? 'cash';
         $notes = $billData->get('notes');
         $discount = $billData->get('discount');
         $orders = $billData->get('orders');

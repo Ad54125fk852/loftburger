@@ -19,6 +19,7 @@ class Order extends Model
         'special_instructions',
         'order_type',
         'waiter_id',
+	'payment_method',
     ];
 
     protected $casts = [

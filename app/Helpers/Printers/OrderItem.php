@@ -14,7 +14,8 @@ class OrderItem
         $this->name = $name;
         $this->quantity = $quantity;
         $this->price = $price;
-        $this->amount = number_format($amount, 2, '.', ',');
+       $this->amount = $amount;
+
     }
 
     public function __toString()

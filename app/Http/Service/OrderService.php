@@ -29,7 +29,7 @@ class OrderService extends Service
         $orderType = $orderData->get("orderType");
         $waiterId = $orderData->get("waiterId");
         $orderItems = $orderData->get("orderItems");
-
+	$paymentMethod = $orderData->get('payment_method', 'cash');
 
         $orderObject = [
             "KOT" => $kot,
@@ -38,7 +38,8 @@ class OrderService extends Service
             "status" => $status,
             "special_instructions" => $specialInstructions,
             "order_type" => $orderType,
-            "waiter_id" => $waiterId
+            "waiter_id" => $waiterId,
+	    "payment_method" => $paymentMethod,
         ];
 
         Log::info("Preparing to create order: " . json_encode($orderObject));

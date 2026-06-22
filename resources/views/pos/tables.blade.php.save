@@ -18,41 +18,25 @@
             </div>
         </header>
 
-        
+        <div class="flex flex-wrap justify-end items-center mb-8 gap-x-6 gap-y-2">
+            @foreach ($table_colors as $status => $color)
+                <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                    <span class="w-4 h-4 rounded-full" style="background-color: {{ $color }};"></span>
+                    <span>{{ ucfirst($status) }}</span>
+                </div>
+            @endforeach
+        </div>
 
         <div class="space-y-10">
             @foreach ($tablesWithLocations as $location => $tables)
                 <div>
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
-                        Localizador</h2>
+                        {{ ucfirst($location) }} Localizador</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-5">
                         @foreach ($tables as $table)
-
-                        @php
-    $order = $table->orders
-        ->where('status', '!=', App\Enums\OrderStatus::Closed)
-        ->first();
-
-    // estado visual por defecto (estado de la mesa)
-    $visualStatus = $table->status->value;
-
-    // si hay orden activa, manda la orden
-    if ($order) {
-        $visualStatus = match ($order->status) {
-            App\Enums\OrderStatus::New => 'runningKOT',
-            App\Enums\OrderStatus::Processing => 'running',
-            App\Enums\OrderStatus::ReadyForPickup => 'printed',
-            App\Enums\OrderStatus::Served => 'paid',
-            App\Enums\OrderStatus::Cancelled => 'unavailable',
-            default => $visualStatus,
-        };
-    }
-@endphp
-
-                            
-                        <div id="{{ $table->id }}" onclick="selectTable({{ $table->id }})"
+                            <div id="{{ $table->id }}" onclick="selectTable({{ $table->id }})"
                                 class="table-item relative flex flex-col rounded-xl shadow-lg p-3 text-white cursor-pointer transition-transform transform hover:-translate-y-1"
-                                data-table-status="{{ $visualStatus }}">
+                                data-table-status="{{ $table->status->value }}">
 
                                 <p class="elapsed-time absolute top-2 right-2 text-xs font-bold bg-black bg-opacity-20 px-1.5 py-0.5 rounded-full"
                                     data-taken-at="{{ $table->taken_at }}">
@@ -61,45 +45,35 @@
                                 <div class="text-center">
                                     <h2 class="text-3xl font-bold tracking-wider">{{ $table->name }}</h2>
                                     @if ($table->order_sum)
-    <p id="tableTotal" class="text-lg font-semibold mt-1">
-        $ {{ number_format($table->order_sum, 0, ',', '.') }}
-    </p>
-@endif
+                                        <p id="tableTotal" class="text-lg font-semibold mt-1">$ {{ $table->order_sum }}
+                                        </p>
+                                    @else
+                                        <p id="tableTotal" class="text-lg font-semibold mt-1"></p> {{-- Ensure element exists for clearing --}}
+                                    @endif
                                 </div>
-        
-            
-
-            
 
 
-<div class="table-options bottom-3 left-0 right-0 flex justify-center gap-2">
-
-    <!-- 👁️ Prefactura -->
-    <button
-        onclick="event.stopPropagation(); printTable({{ $table->id }})"
-        class="action-btn"
-        title="Estado">
-        <i class="fas fa-eye"></i>
-    </button>
-
-    <!-- 🖨️ Imprimir cuenta -->
-    <button
-        onclick="event.stopPropagation(); printPreview('{{ route('pos.table.preview', $table->id) }}')"
-        class="action-btn"
-        title="Imprimir cuenta">
-        <i class="fas fa-print"></i>
-    </button>
-
-    <!-- ✅ Cerrar mesa (SIN pedir método de pago) -->
-    <button
-        onclick="event.stopPropagation(); settleTable({{ $table->id }})"
-        class="action-btn"
-        title="Cerrar mesa">
-        <i class="fas fa-check"></i>
-    </button>
-
-</div>
-
+                                <div class="table-options bottom-3 left-0 right-0 flex justify-center gap-2">
+                                    <div id="showOrdersBtn">
+                                        <button onclick="event.stopPropagation(); showOrders({{ $table->id }})"
+                                            class="action-btn">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="printTableBtn">
+                                        <button onclick="event.stopPropagation(); printTable({{ $table->id }})"
+                                            class="action-btn">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                    </div>
+                                    <div id="settleTableBtn">
+                                        <button
+                                            onclick="event.stopPropagation(); triggerPaymentModal({{ $table->id }})"
+                                            class="action-btn">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -115,19 +89,28 @@
                     <h3 class="text-xl font-semibold text-gray-800">Settle Bill</h3>
                     <button data-close="paymentModal" class="text-gray-400 hover:text-gray-600">&times;</button>
                 </div>
-                <div class="modal-body space-y-3">
-                    <input type="hidden" id="paymentTableId" value="0">
-                    @foreach ($paymentTypes as $payment)
-                        <label
-                            class="flex items-center p-3 rounded-lg hover:bg-gray-50 border has-[:checked]:bg-green-50 has-[:checked]:border-green-400">
-                            <input type="radio" name="payment-type" value="{{ $payment }}"
-                                id="payment-{{ $payment }}"
-                                class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500">
-                            <label for="payment-{{ $payment }}"
-                                class="ml-3 text-gray-700 font-medium">{{ strtoupper($payment) }}</label>
-                        </label>
-                    @endforeach
-                </div>
+                  <div class="modal-body space-y-3">
+    <input type="hidden" id="paymentTableId" value="0">
+
+    @foreach ($paymentTypes as $payment)
+        <label
+            class="flex items-center p-3 rounded-lg hover:bg-gray-50 border has-[:checked]:bg-green-50 has-[:checked]:border-green-400">
+
+            <input type="radio" name="payment-type" value="{{ $payment }}"
+                id="payment-{{ $payment }}"
+                class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500">
+
+            <label for="payment-{{ $payment }}"
+                class="ml-3 text-gray-700 font-medium">
+                {{ strtoupper([
+                    'cash' => 'Efectivo',
+                    'card' => 'Tarjeta',
+                    'upi'  => 'Transferencia'
+                    'courtesy'  => 'Cortesía',
+                        'rappi'     => 'Rappi',
+                        'pendient'   => 'Pendiente',
+                ][$payment] ?? $payment) }}
+        
                 <div class="modal-footer mt-6 flex justify-end gap-3">
                     <button type="button"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
@@ -193,18 +176,11 @@
         }
 
         function handlePayment() {
-    const tableId = $("#paymentTableId").val();
-    const paymentType = $("input[name='payment-type']:checked").val();
-
-    if (!paymentType) {
-        alert("Select payment method");
-        return;
-    }
-
-    settleTable(tableId, paymentType);
-    $("#paymentModal").hide();
-}
-
+            const tableId = $("#paymentTableId").val();
+            const paymentType = $("input[name='payment-type']:checked").val();
+            settleTable(tableId, paymentType);
+            $("#paymentModal").hide();
+        }
 
         function selectTable(tableId) {
             window.location.href = `${selectTableURL}?tableId=${tableId}`;
@@ -241,35 +217,47 @@
         }
 
         // Trigger payment modal
-        function settleTable(tableId) {
-    if (!tableId) {
-        alert("Missing tableId");
-        return;
-    }
+        function triggerPaymentModal(tableId) {
+            $("#paymentModal").show();
+            $("input[name='payment-type'][value='cash']").prop("checked", true);
+            $("#paymentTableId").val(tableId);
+        }
 
-    showLoader();
-
-    $.ajax({
-        url: settleTableUrl,
-        type: "POST",
-        data: { tableId },
-        headers: {
-            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
-        },
-        success: response => {
-            if (response.status === "success") {
-                updateTableStatus(tableId, "available");
-            } else {
-                alert("Table Settlement Failed");
+        // Settle the table
+        function settleTable(tableId, paymentType) {
+            if (!tableId || !paymentType) {
+                alert("Table Settlement Failed, missing data. Reload the page and try again.");
+                return;
             }
-        },
-        error: () => {
-            alert("Table Settlement Failed");
-        },
-        complete: hideLoader
-    });
-}
 
+            event.stopPropagation();
+            showLoader();
+            const csrf_token = $('meta[name="csrf-token"]').attr("content");
+
+            $.ajax({
+                url: settleTableUrl,
+                type: "POST",
+                data: {
+                    tableId,
+                    paymentType
+                },
+                headers: {
+                    "X-CSRF-TOKEN": csrf_token
+                },
+                contentType: "application/x-www-form-urlencoded",
+                success: response => {
+                    if (response.status === "success") {
+                        updateTableStatus(tableId, "available");
+                    } else {
+                        alert("Table Settlement Failed");
+                    }
+                },
+                error: () => {
+                    alert("Table Settlement Failed");
+                },
+                complete: hideLoader
+            });
+        }
 
         // Print table bill
         function printTable(tableId) {
@@ -376,72 +364,4 @@
             });
         }
     </script>
-
-  <script>
-window.printPreview = function (url) {
-
-    // eliminar iframe previo si existe
-    const oldIframe = document.getElementById('print-iframe');
-    if (oldIframe) {
-        oldIframe.remove();
-    }
-
-    // crear iframe oculto
-    const iframe = document.createElement('iframe');
-    iframe.id = 'print-iframe';
-    iframe.src = url;
-
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-
-    document.body.appendChild(iframe);
-
-    iframe.onload = function () {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-    };
-};
-</script>
-
-<script>
-    const tableStatusUrl = "{{ route('pos.table.statuses') }}";
-
-// 🔄 refrescar cada 5 segundos
-setInterval(refreshTableStatuses, 300);
-
-function refreshTableStatuses() {
-    $.get(tableStatusUrl, function (tables) {
-        tables.forEach(table => {
-            const $el = $("#" + table.id);
-            if (!$el.length) return;
-
-            // actualizar estado visual
-            $el.attr("data-table-status", table.status);
-            $el.css("background-color", tableColors[table.status]);
-
-            // actualizar total
-            if (table.order_sum) {
-                $el.find("#tableTotal").text(
-                    "$ " + Number(table.order_sum).toLocaleString('es-CO')
-                );
-            }
-
-            // actualizar tiempo
-            if (table.taken_at) {
-                $el.find(".elapsed-time")
-                   .attr("data-taken-at", table.taken_at);
-            }
-        });
-
-        updateRunningTables();
-        updateElapsedTimes();
-    });
-}
-
-    </script>
-
 </x-pos-layout>

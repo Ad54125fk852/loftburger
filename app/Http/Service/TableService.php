@@ -19,12 +19,17 @@ class TableService extends Service
         return TableLocation::getCachedTableLocations();
     }
     public function getOrderSumForTable($tableId)
-    {
-        return DB::table('orders')
-            ->where('table_id', $tableId)
-            ->where('status', '!=', OrderStatus::Closed)
-            ->sum('total');
-    }
+{
+    return DB::table('orders')
+        ->where('table_id', $tableId)
+        ->whereIn('status', [
+            OrderStatus::New,
+            OrderStatus::Processing,
+            OrderStatus::ReadyForPickup,
+            OrderStatus::Served,
+        ])
+        ->sum('total');
+}
 
     public function getTablesWithOrderSums()
     {

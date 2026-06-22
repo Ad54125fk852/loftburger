@@ -95,9 +95,9 @@
                     <table class="w-full shrink-0">
                         <thead class="bg-gray-700 text-white">
                             <tr id="order-items-heading">
-                                <th class="p-2 text-left font-semibold w-3/6">Item</th>
-                                <th class="p-2 font-semibold w-2/6">Qty</th>
-                                <th class="p-2 font-semibold w-1/6">Amount</th>
+                                <th class="p-2 text-left font-semibold w-3/6">Items</th>
+                                <th class="p-2 font-semibold w-2/6">Cantidad</th>
+                                <th class="p-2 font-semibold w-1/6">Precio C/U</th>
                             </tr>
                         </thead>
                     </table>
@@ -113,38 +113,90 @@
                             </tbody>
                         </table>
                     </div>
-                    <table class="w-full shrink-0">
-                        <tfoot class="bg-gray-200 font-bold">
-                            <tr class="text-lg text-gray-800">
-                                <td class="p-3 text-left" colspan="2">Total</td>
-                                <td id="total" class="p-3 text-right">0</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                   <table class="w-full shrink-0">
+    <tfoot class="bg-gray-200 font-bold">
+        <tr class="text-lg text-gray-800">
+            <td class="p-3 text-left" colspan="2">Total</td>
+
+            <!-- TOTAL REAL (usado por pos.js, NO visible) -->
+            <td id="total" class="p-3 text-right hidden">0</td>
+
+            <!-- TOTAL VISIBLE (el ÚNICO que ve el usuario) -->
+            <td id="total-visual"
+                class="p-3 text-right text-2xl font-extrabold text-green-700">
+                $0
+            </td>
+        </tr>
+    </tfoot>
+</table>
+
+
+
+
                 </div>
 
-                <div class="p-2 bg-gray-100 border-t border-gray-200 shrink-0">
-                    <div id="payment-types" class="flex items-center justify-around gap-2 mb-2">
-                        @foreach ($paymentTypes as $paymentType)
-                            <label
-                                class="flex-1 flex items-center justify-center p-2 rounded-lg border bg-white cursor-pointer has-[:checked]:bg-green-50 has-[:checked]:border-green-400 has-[:checked]:ring-2 has-[:checked]:ring-green-200">
-                                <input id="{{ $paymentType }}" type="radio" value="{{ $paymentType }}"
-                                    name="payment-type" class="h-4 w-4 text-green-600 focus:ring-green-500"
-                                    {{ $loop->first ? 'checked' : '' }}>
-                                <span class="ml-2 font-medium text-gray-700">{{ Str::upper($paymentType) }}</span>
-                            </label>
-                        @endforeach
-                    </div>
+              <div id="payment-types" class="flex flex-col gap-2 mb-2">
+
+    <!-- FILA SUPERIOR -->
+    <div class="flex items-center justify-around gap-2">
+        @foreach ($paymentTypes as $paymentType)
+            @if (in_array($paymentType, ['cash','card','upi']))
+            
+                <label
+                    class="flex-1 flex items-center justify-center p-2 rounded-lg border bg-white cursor-pointer
+                    has-[:checked]:bg-green-50 has-[:checked]:border-green-400
+                    has-[:checked]:ring-2 has-[:checked]:ring-green-200">
+
+                    <input id="{{ $paymentType }}" type="radio" value="{{ $paymentType }}"
+                        name="payment-type"
+                        class="h-4 w-4 text-green-600 focus:ring-green-500">
+
+                    <span class="ml-2 font-medium text-gray-700">
+                        {{ Str::upper([
+                            'cash' => 'Efectivo',
+                            'card' => 'Tarjeta',
+                            'upi'  => 'Transfe',
+                        ][$paymentType] ?? $paymentType) }}
+                    </span>
+                </label>
+            @endif
+        @endforeach
+    </div>
+
+    <!-- FILA INFERIOR -->
+    <div class="flex items-center justify-around gap-2">
+        @foreach ($paymentTypes as $paymentType)
+            @if (in_array($paymentType, ['courtesy','rappi','pendient']))
+                <label
+                    class="flex-1 flex items-center justify-center p-2 rounded-lg border bg-white cursor-pointer
+                    has-[:checked]:bg-green-50 has-[:checked]:border-green-400
+                    has-[:checked]:ring-2 has-[:checked]:ring-green-200">
+
+                    <input id="{{ $paymentType }}" type="radio" value="{{ $paymentType }}"
+                        name="payment-type"
+                        class="h-4 w-4 text-green-600 focus:ring-green-500">
+
+                    <span class="ml-2 font-medium text-gray-700">
+                        {{ Str::upper([
+                            'courtesy' => 'Cortesía',
+                            'rappi'    => 'Rappi',
+                            'pendient'  => 'Pendiente',
+                        ][$paymentType] ?? $paymentType) }}
+                    </span>
+                </label>
+            @endif
+        @endforeach
+    </div>
+</div>
+
+
                     <div id="save-and-bill-options" class="grid grid-cols-3 gap-2">
                         <button
-                            class="btn flex items-center justify-center gap-2 col-span-1 py-3 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition-colors"
-                            id="bill-order"><i class="fa fa-print"></i> Bill</button>
-                        <button
                             class="btn flex items-center justify-center gap-2 col-span-1 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
-                            id="kot-order"><i class="fa fa-receipt"></i> KOT</button>
+                            id="kot-order"><i class="fa fa-receipt"></i> Agregar</button>
                         <button
                             class="btn flex items-center justify-center gap-2 col-span-1 py-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-colors"
-                            id="cancel-order"><i class="fa fa-times"></i> Cancel</button>
+                            id="cancel-order"><i class="fa fa-times"></i> Cancelar</button>
                     </div>
                 </div>
             </aside>
@@ -155,14 +207,13 @@
             <div class="modal-overlay absolute inset-0" tabindex="-1" data-close="addNotesModal"></div>
             <div class="modal-container bg-white rounded-xl shadow-2xl w-full max-w-md m-4 relative">
                 <div class="modal-header flex justify-between items-center p-4 border-b">
-                    <h3 class="text-xl font-semibold text-gray-800">Add Special Instructions</h3>
+                    <h3 class="text-xl font-semibold text-gray-800">Agregar Orden Especial</h3>
                     <button class="modal-close text-gray-400 hover:text-gray-600 font-bold py-1 px-3"
                         data-close="addNotesModal">&times;</button>
                 </div>
                 <div class="modal-body p-6">
                     <div class="form-group mb-6">
-                        <label class="block text-md font-medium text-gray-700 mb-3">Select from predefined
-                            notes:</label>
+                        <label class="block text-md font-medium text-gray-700 mb-3">Selecciona nota predefinida:</label>
                         <div class="grid grid-cols-2 gap-x-6 gap-y-3">
                             @foreach ($predefinedNotes as $note)
                                 <label for="{{ $note }}"
@@ -175,8 +226,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="customNotes" class="block text-md font-medium text-gray-700 mb-2">Or type a custom
-                            note:</label>
+                        <label for="customNotes" class="block text-md font-medium text-gray-700 mb-2">Nota Personalizada:</label>
                         <textarea name="extra-notes" id="customNotes"
                             class="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" rows="3"></textarea>
                     </div>
@@ -184,14 +234,50 @@
                 <div class="modal-footer flex justify-end p-4 bg-gray-50 border-t rounded-b-xl">
                     <button type="button"
                         class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold mr-2 transition-colors"
-                        data-close="addNotesModal">Close</button>
+                        data-close="addNotesModal">Cerrar</button>
                     <button type="button"
                         class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors"
-                        id="saveNotesBtn">Save Notes</button>
+                        id="saveNotesBtn">Guardar Notas</button>
                 </div>
             </div>
         </div>
     </div>
+
+			<div id="cashModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+        <h3 class="text-xl font-bold mb-4">Pago en efectivo</h3>
+
+        <div class="space-y-3">
+            <div>
+                <label class="text-sm font-semibold">Total</label>
+                <input id="cashTotal" class="w-full border rounded px-3 py-2 bg-gray-100" readonly>
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Paga con</label>
+                <input id="cashGiven" type="number"
+                    class="w-full border rounded px-3 py-2"
+                    placeholder="Ej: 100000">
+            </div>
+
+            <div>
+                <label class="text-sm font-semibold">Devueltas</label>
+                <input id="cashChange"
+                    class="w-full border rounded px-3 py-2 bg-green-100 font-bold"
+                    readonly>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-5">
+            <button onclick="closeCashModal()"
+                class="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
+            <button onclick="confirmCashPayment()"
+                class="px-4 py-2 bg-green-600 text-white rounded">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+
 
     {{-- The original script block is preserved to ensure functionality remains unchanged --}}
     <script>
@@ -209,6 +295,80 @@
         const settleTableUrl = "{{ route('pos.table.settle', [], false) }}";
     </script>
     <script src="{{ asset('js/pos.js') }}"></script>
+
+	 <script>
+    // Detectar cuando seleccionan EFECTIVO
+    $(document).on('change', 'input[name="payment-type"]', function () {
+        if (this.value === 'cash') {
+            openCashModal();
+        }
+    });
+
+    function openCashModal() {
+        const total = getCurrentTotal();
+        $('#cashTotal').val(formatCOP(total));
+        $('#cashGiven').val('');
+        $('#cashChange').val('');
+        $('#cashModal').removeClass('hidden').addClass('flex');
+    }
+
+    function closeCashModal() {
+        $('#cashModal').addClass('hidden').removeClass('flex');
+    }
+
+    $('#cashGiven').on('input', function () {
+        const total = getCurrentTotal();
+        const paid = parseFloat(this.value) || 0;
+        const change = paid - total;
+
+        $('#cashChange').val(
+            change >= 0 ? formatCOP(change) : 'Falta dinero'
+        );
+    });
+
+    function confirmCashPayment() {
+        closeCashModal();
+        // no toca pos.js ni backend
+    }
+
+    function formatCOP(value) {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP'
+        }).format(value);
+    }
+
+    function getCurrentTotal() {
+        const totalText = $('#total').text().replace(/[^\d]/g, '');
+        return parseFloat(totalText) || 0;
+    }
+</script>
+
+
+
+
+
+<script>
+function formatCOP(value) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(value);
+}
+
+// 🔄 sincroniza el total real con el visual
+setInterval(() => {
+    const raw = document.getElementById('total')?.innerText;
+
+    if (!raw || isNaN(raw)) return;
+
+    document.getElementById('total-visual').innerText = formatCOP(raw);
+}, 200);
+</script>
+
+
+
     <style>
         /* Custom styles for dynamically generated elements from pos.js */
         #order-items-body tr {

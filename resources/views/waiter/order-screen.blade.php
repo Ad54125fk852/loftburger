@@ -215,7 +215,7 @@
                         source: 'waiter',
                         tableId: this.table.id,
                         specialInstructions: this.finalNotes,
-                        paymentMethod: 'cash', // Defaulting as waiters don't handle payments.
+                        payment_method: 'cash', // Defaulting as waiters don't handle payments.
                         isPickUpOrder: false,
                         billTable: false,
                         order: orderData

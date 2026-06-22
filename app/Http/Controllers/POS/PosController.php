@@ -67,6 +67,40 @@ class PosController extends Controller
     }
 
 
+    public function tableStatuses()
+{
+    $tables = Table::with(['orders' => function ($q) {
+        $q->where('status', '!=', OrderStatus::Closed);
+    }])->get();
+
+    return response()->json(
+        $tables->map(function ($table) {
+            $order = $table->orders->first();
+
+            $visualStatus = $table->status->value;
+
+            if ($order) {
+                $visualStatus = match ($order->status) {
+                    OrderStatus::New => 'runningKOT',
+                    OrderStatus::Processing => 'running',
+                    OrderStatus::ReadyForPickup => 'printed',
+                    OrderStatus::Served => 'paid',
+                    OrderStatus::Cancelled => 'unavailable',
+                    default => $visualStatus,
+                };
+            }
+
+            return [
+                'id' => $table->id,
+                'status' => $visualStatus,
+                'order_sum' => $table->order_sum,
+                'taken_at' => $table->taken_at,
+            ];
+        })
+    );
+}
+
+
     public function selectTable()
     {
         $tablesWithLocations = $this->tableService->getTablesWithOrderSums()->groupBy('location.name');
@@ -100,34 +134,71 @@ class PosController extends Controller
     }
 
 
-    public function settleTable(Request $request)
-    {
-        $tableId = $request->tableId;
+   public function settleTable(Request $request)
+{
+    $request->validate([
+        'tableId' => 'required|integer',
+    ]);
 
-        $table = Table::find($tableId);
+    $tableId = $request->tableId;
+    $table = Table::findOrFail($tableId);
 
-        if (!$table) {
-            return response()->json(['status' => 'error', 'message' => 'Table not found']);
-        }
+    // 1️⃣ Cerrar órdenes abiertas
+    $orders = Order::where('table_id', $tableId)
+        ->where('status', '!=', OrderStatus::Closed)
+        ->get();
 
-        TableHelper::markTableAsPaid($request->tableId);
-
-        $orders = $table->orders()->where('status', '!=', OrderStatus::Closed)->get();
-
-        foreach ($orders as $order) {
-            $order->status = OrderStatus::Closed;
-            $order->save();
-        }
-
-        $lastBill = Bill::where('table_id', $request->tableId)->latest()->first();
-
-        $lastBill->payment_method = $request->paymentType;
-        $lastBill->status = 'closed';
-
-        $lastBill->save();
-
-        return response()->json(['status' => 'success', 'message' => 'Table settled']);
+    foreach ($orders as $order) {
+        $order->status = OrderStatus::Closed;
+        $order->save();
     }
+
+    // 2️⃣ Buscar bill abierto
+    $bill = Bill::where('table_id', $tableId)
+        ->where('status', 'open')
+        ->latest()
+        ->first();
+
+    // 3️⃣ Si NO existe bill → crearlo usando payment_method de la orden
+    if (!$bill) {
+        $lastOrder = Order::where('table_id', $tableId)
+            ->latest()
+            ->first();
+
+        if (!$lastOrder) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No orders found for table'
+            ], 400);
+        }
+
+        $paymentMethod = $lastOrder->payment_method ?? 'cash';
+
+        $billId = BillHelper::createTableBill(
+            $tableId,
+            null,
+            $paymentMethod,
+            0
+        );
+
+        $bill = Bill::findOrFail($billId);
+    }
+
+    // 4️⃣ Cerrar bill
+    $bill->status = 'closed';
+    $bill->save();
+
+    // 5️⃣ Liberar mesa
+    TableHelper::markTableAsPaid($tableId);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Table settled successfully'
+    ]);
+}
+
+
+
 
     //tableOrders
     public function tableOrders($tableId)

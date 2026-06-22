@@ -8,28 +8,46 @@
         </h2>
     </x-slot>
 
-    <div class="py-6">
+<div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6">
 
-                <div class="mb-6">
-                    <x-search-by-date>
-                        @if (Auth::user()->isAdmin())
-                            <div class="flex items-center justify-start flex-wrap gap-6 mt-4">
-                                <label for="includeDeleted" class="flex items-center cursor-pointer">
-                                    <input type="checkbox" id="includeDeleted" name="includeDeleted"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-600">Include Deleted Bills</span>
-                                </label>
-                                <label for="onlyDeleted" class="flex items-center cursor-pointer">
-                                    <input type="checkbox" id="onlyDeleted" name="onlyDeleted"
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-600">Show Only Deleted Bills</span>
-                                </label>
-                            </div>
-                        @endif
-                    </x-search-by-date>
-                </div>
+<div class="mb-6 px-6">
+    <x-search-by-date>
+        <div class="flex items-center gap-6 flex-wrap">
+
+            <div class="flex items-center gap-3">
+                <label class="text-sm font-medium text-gray-600 whitespace-nowrap">
+                    Payment Method
+                </label>
+
+                <select id="paymentMethod"
+                    class="rounded border-gray-300 shadow-sm min-w-[180px]">
+                    <option value="">All</option>
+                    <option value="EFECTIVO">Efectivo</option>
+<option value="TARJETA">Tarjeta</option>
+<option value="TRANSFE">Transferencia</option>
+<option value="COURTESY">Cortesía</option>
+<option value="RAPPI">Rappi</option>
+<option value="PENDIENT">Pendiente</option>
+                </select>
+            </div>
+
+            @if (Auth::user()->isAdmin())
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="includeDeleted">
+                    <span class="text-sm">Include Deleted</span>
+                </label>
+
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="onlyDeleted">
+                    <span class="text-sm">Only Deleted</span>
+                </label>
+            @endif
+
+        </div>
+    </x-search-by-date>
+</div>
 
                 <div class="overflow-x-auto">
                     <table id="bills-table" class="min-w-full">
@@ -74,90 +92,102 @@
     </div>
 
     {{-- The original script block is preserved --}}
-    <script>
-        document.getElementById("searchByDate").addEventListener("click", function() {
-            let startDate = new Date(getSelectPickrFormattedDate(startDateObject));
-            let endDate = getSelectPickrFormattedDate(endDateObject);
-            let includeDeleted = document.getElementById("includeDeleted")?.checked ?? 'false';
-            let onlyDeleted = document.getElementById("onlyDeleted")?.checked ?? 'false';
 
-            if (startDate > endDate) {
-                alert("Start date should be less than end date");
-                return;
-            }
 
-            startDate = formatDateToYYYYMMDD(startDate);
-            endDate = formatDateToYYYYMMDD(endDate);
+<script>
+const paymentMethodMap = {
+    EFECTIVO: ['EFECTIVO', 'cash'],
+    TARJETA: ['TARJETA', 'tarjeta', 'CARD', 'card'],
+    TRANSFE: ['upi', 'TRANSFE', 'TRANSFERENCIA'],
+    COURTESY: ['COURTESY', 'courtesy'],
+    RAPPI: ['RAPPI', 'rappi'],
+    PENDIENT: ['PENDIENT', 'pendient']
+};
+</script>
 
-            let url =
-                `{{ route('admin.bills.by.date', [], false) }}?startDate=${startDate}&endDate=${endDate}&includeDeleted=${includeDeleted}&onlyDeleted=${onlyDeleted}`;
 
-            $.ajax({
-                url: url,
-                method: 'GET',
-                success: function(data) {
-                    $('#bills-table').DataTable().destroy();
-                    let bills = data.bills;
-                    let tableBody = document.getElementById("bills-table-body");
-                    tableBody.innerHTML = bills;
 
-                    let totalSales = formatCurrency(data.totalSales);
-                    $("#total-sales-amount").text(totalSales);
+<script>
+document.getElementById("searchByDate").addEventListener("click", function () {
 
-                    var filename = `Bills-${startDate}-To-${endDate}`;
-                    if (includeDeleted) {
-                        filename += "-IncludeDeleted";
-                    }
-                    if (onlyDeleted) {
-                        filename += "-OnlyDeleted";
-                    }
-                    document.title = filename;
+    // 📅 fechas (ya las tienes)
+    let startDate = new Date(getSelectPickrFormattedDate(startDateObject));
+    let endDate = getSelectPickrFormattedDate(endDateObject);
 
-                    $('#bills-table').DataTable({
-                        "paging": true,
-                        dom: 'Bfrtip',
-                        buttons: [{
-                                extend: 'csv',
-                                exportOptions: {
-                                    columns: ':lt(4)'
-                                },
-                                filename: filename
-                            },
-                            {
-                                extend: 'excel',
-                                exportOptions: {
-                                    columns: ':lt(4)'
-                                },
-                                filename: filename
-                            },
-                            {
-                                extend: 'pdf',
-                                exportOptions: {
-                                    columns: ':lt(4)'
-                                },
-                                filename: filename
-                            },
-                            {
-                                extend: 'print',
-                                exportOptions: {
-                                    columns: ':lt(4)'
-                                },
-                                filename: filename
-                            }
-                        ]
-                    });
-                },
-                error: function(error) {
-                    console.error("Error:", error);
-                }
+    // 🧾 filtros extra
+    let selectedMethod = document.getElementById("paymentMethod")?.value ?? '';
+let paymentMethods = null;
+
+if (selectedMethod && paymentMethodMap[selectedMethod]) {
+    paymentMethods = paymentMethodMap[selectedMethod];
+}
+
+    let includeDeleted = document.getElementById("includeDeleted")?.checked ?? false;
+    let onlyDeleted = document.getElementById("onlyDeleted")?.checked ?? false;
+
+    if (startDate > endDate) {
+        alert("Start date should be less than end date");
+        return;
+    }
+
+    startDate = formatDateToYYYYMMDD(startDate);
+    endDate = formatDateToYYYYMMDD(endDate);
+
+    let url =
+    `{{ route('admin.bills.by.date', [], false) }}` +
+    `?startDate=${startDate}` +
+    `&endDate=${endDate}` +
+    (paymentMethods ? `&paymentMethod=${paymentMethods.join(',')}` : '') +
+    `&includeDeleted=${includeDeleted}` +
+    `&onlyDeleted=${onlyDeleted}`;
+
+
+    $.ajax({
+        url: url,
+        method: 'GET',
+        success: function (data) {
+
+            // 🔄 reiniciar DataTable
+            $('#bills-table').DataTable().destroy();
+
+            // 🧩 insertar filas
+            document.getElementById("bills-table-body").innerHTML = data.bills;
+
+            // 💰 total
+            document.getElementById("total-sales-amount").innerText =
+                formatCurrency(data.totalSales);
+
+            // 🔁 volver a crear DataTable
+            $('#bills-table').DataTable({
+                paging: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    { extend: 'csv', exportOptions: { columns: ':lt(4)' } },
+                    { extend: 'excel', exportOptions: { columns: ':lt(4)' } },
+                    { extend: 'pdf', exportOptions: { columns: ':lt(4)' } },
+                    { extend: 'print', exportOptions: { columns: ':lt(4)' } }
+                ]
             });
-        });
-
-        function formatDateToYYYYMMDD(date) {
-            let year = date.getFullYear();
-            let month = date.getMonth() + 1;
-            let day = date.getDate();
-            return `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}`;
+        },
+        error: function (err) {
+            console.error("Error loading bills", err);
         }
-    </script>
+    });
+});
+
+// 📆 helper (si ya lo tienes, no dupliques)
+function formatDateToYYYYMMDD(date) {
+    let y = date.getFullYear();
+    let m = String(date.getMonth() + 1).padStart(2, '0');
+    let d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+</script>
+<script>
+document.getElementById("paymentMethod")
+    ?.addEventListener("change", function () {
+        document.getElementById("searchByDate").click();
+    });
+</script>
+
 </x-master-layout>

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>FoodEase - @yield('title', config('app.name', 'FoodEase'))</title>
+    <title>LOFTBURGER - @yield('title', config('app.name', 'FoodEase'))</title>
 
     @include('layouts.scripts')
 </head>
@@ -36,9 +36,9 @@
                 @php $user = Auth::user(); @endphp
 
                 @if ($user->isBiller() || $user->isAdmin())
-                    <x-nav-link :href="route('pos.tables')" :active="request()->routeIs('pos.tables')">POS</x-nav-link>
-                    <x-nav-link :href="route('admin.bills.index')" :active="request()->routeIs('admin.bills.index')">Bills</x-nav-link>
-                    <x-nav-link :href="route('order.KOT.view')" :active="request()->routeIs('order.KOT.view')">KOT View</x-nav-link>
+                    <x-nav-link :href="route('pos.tables')" :active="request()->routeIs('pos.tables')">Localizadores</x-nav-link>
+                    <x-nav-link :href="route('admin.bills.index')" :active="request()->routeIs('admin.bills.index')">Facturas</x-nav-link>
+                    <x-nav-link :href="route('order.KOT.view')" :active="request()->routeIs('order.KOT.view')">Ordenes</x-nav-link>
                     <x-nav-link :href="route('reporting.index')" :active="request()->routeIs('reporting.index')">Reporting</x-nav-link>
                     @if (env('KITCHEN_MODULE_ENABLED', false))
                         <x-nav-link :href="route('kitchen.index')" :openInNewTab="true" :active="request()->routeIs('kitchen.index')">Kitchen View</x-nav-link>
@@ -47,11 +47,11 @@
 
                 @if ($user->isAdmin())
                     <hr class="my-2 border-t border-gray-700">
-                    <p class="px-4 py-2 text-xs font-semibold tracking-wider text-gray-300 uppercase">Admin</p>
+                    <p class="px-4 py-2 text-xs font-semibold tracking-wider text-gray-300 uppercase">Caja</p>
                     <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.index')">Categories</x-nav-link>
                     <x-nav-link :href="route('admin.menus.index')" :active="request()->routeIs('admin.menus.index')">Menus</x-nav-link>
-                    <x-nav-link :href="route('admin.tables.index')" :active="request()->routeIs('admin.tables.index')">Tables</x-nav-link>
-                    <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">Manage Users</x-nav-link>
+                    <x-nav-link :href="route('admin.tables.index')" :active="request()->routeIs('admin.tables.index')">Configurar Localizadores</x-nav-link>
+                    <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.index')">Administrar Usuarios</x-nav-link>
                     <x-nav-link :href="route('admin.restaurant.show.config')" :active="request()->routeIs('restaurant.show.config')">Restaurant Settings</x-nav-link>
                 @endif
 

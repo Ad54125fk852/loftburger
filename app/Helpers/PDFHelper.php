@@ -27,6 +27,7 @@ public static function streamOrderPreviewToBrowser(Order $order)
     // 2️⃣ Datos tipo Bill (pero sin Bill)
     $billDetails = collect([
         'id'          => 'PRE-' . $order->id,
+	'KOT'         => $order->KOT,
         'table_no'    => $order->table_id ? $order->table_id : 'Pick Up',
         'grand_total' => $order->grand_total ?? 0,
         'discount'    => 0,
@@ -67,6 +68,7 @@ public static function streamOrderPreviewToBrowser(Order $order)
 
         $billDetails = collect([
             'id' => $billFullId,
+	    'KOT' => $bill->orders->first()?->KOT,
             'table_no' => $bill->table_id ? $bill->table_id : 'Pick Up',
             'grand_total' => $bill->grand_total,
             'discount' => $bill->discount,
@@ -83,7 +85,7 @@ public static function streamOrderPreviewToBrowser(Order $order)
 
 
                 // if key alredy exists it wil increment
-                $orderDetails->put($itemName, ['quantity' => $quantity, 'price' => $price + 5]);
+                $orderDetails->put($itemName, ['quantity' => $quantity, 'price' => $price]);
             }
         }
 

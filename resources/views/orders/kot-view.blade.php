@@ -93,36 +93,16 @@ function cancelOrderAndRefresh(orderId) {
 </script>
 
 <script>
-window.printPreview = function (url) {
-
-    if (!confirm('¿Deseas imprimir la cuenta ahora?')) {
-        return;
-    }
-
-    // 🔹 Crear iframe oculto
+function printPreview(url) {
     const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
+    iframe.style.display = 'none';
     iframe.src = url;
-
     document.body.appendChild(iframe);
 
-    iframe.onload = function () {
-        iframe.contentWindow.focus();
+    iframe.onload = () => {
         iframe.contentWindow.print();
-
-        // 🔥 limpiar iframe luego
-        setTimeout(() => {
-            document.body.removeChild(iframe);
-        }, 1000);
     };
-};
+}
 </script>
-
-
 
 </x-master-layout>

@@ -1,3 +1,15 @@
+// Métodos de pago válidos (EXTENSIÓN DEL SISTEMA)
+const VALID_PAYMENT_METHODS = [
+    'cash',
+    'card',
+    'upi',
+    'courtesy',
+    'rappi',
+    'pendient'
+];
+
+
+
 // Author: Pavan Vattikala
 
 const noitemsContainer =
@@ -218,7 +230,9 @@ $(document).ready(function () {
     });
 
     // set default payment type
-    $("#cash").prop("checked", true);
+   if ($('input[name="payment-type"]:checked').length === 0) {
+    $('input[name="payment-type"][value="cash"]').prop('checked', true);
+}
 
     // Hide KOT if Takeaway is selected
     if ($("#takeaway").hasClass("active")) {
@@ -373,6 +387,7 @@ $("#kot-order").click(function () {
 
 // Save order
 function saveOrder(printBill = false) {
+    console.log('saveOrder() EJECUTADO');
     //validate order
     if (!hasPrevOrders && orderItems.length === 0) {
         alert("No Items Selected");
@@ -389,8 +404,15 @@ function saveOrder(printBill = false) {
         tableId = $("#table").data("tableid");
     }
 
-    const paymentMethod = $("input[name='payment-type']:checked").next().text();
+    let paymentMethod = $('input[name="payment-type"]:checked').val();
 
+if (!paymentMethod || !VALID_PAYMENT_METHODS.includes(paymentMethod)) {
+    paymentMethod = 'cash';
+    $('input[name="payment-type"][value="cash"]').prop('checked', false);
+}
+
+
+console.log('paymentMethod FINAL →', paymentMethod);
     const order = {
         orderItems: orderItems,
         total: $("#total").text(),
@@ -408,7 +430,7 @@ function saveOrder(printBill = false) {
             tableId: tableId,
             specialInstructions: selectedNotes,
             isPickUpOrder: isPickUpOrder,
-            paymentMethod: paymentMethod,
+            payment_method: paymentMethod,
             billTable: billTable,
             order: order,
         },
@@ -445,7 +467,11 @@ function billTable() {
         type: "POST",
         data: {
             tableId: tableId,
-            paymentType: $("input[name='payment-type']:checked").next().text(),
+            payment_method: VALID_PAYMENT_METHODS.includes(
+    $('input[name="payment-type"]:checked').val()
+) ? $('input[name="payment-type"]:checked').val() : 'cash',
+
+
         },
         headers: {
             "X-CSRF-TOKEN": csrf_token,
@@ -479,7 +505,11 @@ $("#settle-order").click(function () {
         type: "POST",
         data: {
             tableId: tableId,
-            paymentType: $("input[name='payment-type']:checked").next().text(),
+            payment_method: VALID_PAYMENT_METHODS.includes(
+    $('input[name="payment-type"]:checked').val()
+) ? $('input[name="payment-type"]:checked').val() : 'cash',
+
+
         },
         headers: {
             "X-CSRF-TOKEN": csrf_token,

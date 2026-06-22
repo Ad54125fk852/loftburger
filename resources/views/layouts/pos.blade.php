@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'FoodEase') }} - @yield('title')</title>
+    <title>LOFTBURGER</title>
 
     @include('layouts.scripts')
     @stack('styles')
@@ -28,7 +28,7 @@
                         <nav>
 
                             <x-pos-nav-link :href="route('pos.tables')" :active="request()->routeIs('pos.tables')">
-                                {{ __('New Order') }}
+                                {{ __('Nueva Orden') }}
                             </x-pos-nav-link>
                         </nav>
                     </div>
@@ -36,15 +36,15 @@
                     <nav class="flex items-center gap-x-6">
                         @if (auth()->user()->hasPermission(App\Enums\UserRole::Admin))
                             <x-pos-nav-link :href="route('pos.tables')" :active="request()->routeIs('pos.tables')">
-                                {{ __('Tables') }}
+                                {{ __('Localizadores') }}
                             </x-pos-nav-link>
                             <x-pos-nav-link :href="route('admin.bills.index')" :active="request()->routeIs('admin.bills.index')">
-                                {{ __('Bills') }}
+                                {{ __('Facturas') }}
                             </x-pos-nav-link>
                         @endif
 
                         <x-pos-nav-link :href="route('order.KOT.view')" :active="request()->routeIs('order.KOT.view')">
-                            {{ __('KOT View') }}
+                            {{ __('Ordenes') }}
                         </x-pos-nav-link>
 
                         <x-pos-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">

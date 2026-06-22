@@ -26,27 +26,19 @@
 
 
 <script>
-    function formatCurrency(amount) {
+function formatCurrency(amount) {
 
-        // Ensure the amount is a number
-        amount = parseFloat(amount);
+    amount = parseFloat(amount);
 
-        // If the conversion fails, return an empty string or handle the error
-        if (isNaN(amount)) {
-            console.error("Invalid amount:", amount);
-            return '';
-        }
-        // Convert the amount to a string with 2 decimal places
-        let amountString = amount.toFixed(2);
-
-        // Split the amount into integer and decimal parts
-        let [integerPart, decimalPart] = amountString.split('.');
-
-        // Add commas to the integer part according to Indian numbering system
-
-        integerPart = integerPart.replace(/(\d)(?=(\d\d)+\d$)/g, "$1,") // 1,23,45,678
-
-        // Combine the integer part, decimal part, and add the Rupee symbol
-        return `₹ ${integerPart}.${decimalPart}`;
+    if (isNaN(amount)) {
+        console.error("Invalid amount:", amount);
+        return '';
     }
+
+    return '$ ' + amount.toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
 </script>
+

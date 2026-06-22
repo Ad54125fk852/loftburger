@@ -77,6 +77,18 @@ class OrderController extends Controller
     public function submit(OrderSubmitRequest $request)
     {
 
+	// 🔧 NORMALIZAR PAYMENT METHOD (frontend viejo vs nuevo)
+    if (!$request->has('payment_method') && $request->has('paymentMethod')) {
+        $request->merge([
+            'payment_method' => $request->paymentMethod
+        ]);
+    }
+
+    \Log::info('PAYMENT NORMALIZED', [
+        'payment_method' => $request->payment_method,
+        'all' => $request->all()
+    ]);
+
         // Process the order
         $source = $request->source;
 
@@ -98,6 +110,8 @@ class OrderController extends Controller
             'isPickUpOrder' => $isPickUpOrder,
             'isTableOrder' => $isTableOrder,
         ]);
+
+        $commonData->put('payment_method', $request->payment_method);
 
         if ($source === "waiter") {
             $orderData = $this->processWaiterOrder($request, $commonData);
@@ -140,9 +154,14 @@ class OrderController extends Controller
         // Billing Process
 
         $billId = null;
-        $discount = 0;
-        $paymentMethod = $request->paymentMethod;
-        $billTable = $request->billTable === "true" ? true : false;
+$discount = 0;
+
+$orderModel = Order::where('KOT', $kot)->latest()->first();
+$paymentMethod = $orderModel?->payment_method ?? 'cash';
+
+
+$billTable = $request->billTable === "true" ? true : false;
+
 
         if ($isPickUpOrder) {
             //create bill for pick up order directly
